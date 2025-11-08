@@ -1,19 +1,21 @@
-"""
-Dashboard de preços de GLP - janeiro/2024
-Requisitos:
-- 5 tipos de gráficos
-- 2 filtros interativos
-- títulos e legendas claras
-"""
-
 import pandas as pd
 from datetime import datetime
 
 from dash import Dash, dcc, html, Input, Output
 import plotly.express as px
 
-#tratando os dados
-df = pd.read_csv("datasets/GLP/glp-2024-01.csv", sep=None, engine="python", encoding="utf-8-sig")
+
+#Tratamento dos dados
+
+df = pd.read_csv(
+    "datasets/GLP/glp-2025-01.csv",
+    sep=None,
+    engine="python",
+    encoding="utf-8-sig",
+)
+
+df.columns = df.columns.str.replace("\ufeff", "", regex=False).str.strip()
+
 df = df.rename(
     columns={
         "Regiao - Sigla": "regiao",
@@ -29,12 +31,13 @@ df = df.rename(
 )
 
 
-df["data_coleta"] = pd.to_datetime(df["data_coleta"], format="%d/%m/%Y")
+df["data_coleta"] = pd.to_datetime(df["data_coleta"], format="%d/%m/%Y", errors="coerce")
+
 
 df["valor_venda"] = (
     df["valor_venda"]
     .astype(str)
-    .str.replace(".", "", regex=False) 
+    .str.replace(".", "", regex=False)
     .str.replace(",", ".", regex=False)
     .astype(float)
 )
@@ -47,9 +50,11 @@ bandeiras = sorted(df["bandeira"].dropna().unique())
 data_min = df["data_coleta"].min()
 data_max = df["data_coleta"].max()
 
-#app
+#classe(dash)
 app = Dash(__name__)
 app.title = "Dashboard GLP"
+
+GRID_GAP = "20px"
 
 app.layout = html.Div(
     style={"margin": "20px"},
@@ -60,9 +65,14 @@ app.layout = html.Div(
             style={"textAlign": "center"},
         ),
 
-        #definindo filtros
+        #div para filtros
         html.Div(
-            style={"display": "flex", "gap": "20px", "flexWrap": "wrap", "marginBottom": "20px"},
+            style={
+                "display": "grid",
+                "gridTemplateColumns": "repeat(auto-fit, minmax(240px, 1fr))",
+                "gap": GRID_GAP,
+                "marginBottom": "20px",
+            },
             children=[
                 html.Div(
                     children=[
@@ -74,7 +84,6 @@ app.layout = html.Div(
                             placeholder="Selecione uma ou mais regiões",
                         ),
                     ],
-                    style={"minWidth": "200px", "flex": "1"}
                 ),
                 html.Div(
                     children=[
@@ -86,7 +95,6 @@ app.layout = html.Div(
                             placeholder="Selecione uma ou mais bandeiras",
                         ),
                     ],
-                    style={"minWidth": "200px", "flex": "1"}
                 ),
                 html.Div(
                     children=[
@@ -100,77 +108,79 @@ app.layout = html.Div(
                             display_format="DD/MM/YYYY",
                         ),
                     ],
-                    style={"minWidth": "220px", "flex": "1"}
                 ),
             ],
         ),
 
-        #graficos
+        #div para comparação de preço por estado e participação por bandeira
         html.Div(
-            style={"display": "flex", "gap": "20px", "flexWrap": "wrap"},
+            style={
+                "display": "grid",
+                "gridTemplateColumns": "2fr 1fr",
+                "gap": GRID_GAP,
+            },
             children=[
                 html.Div(
                     children=[
                         html.H3("Preço médio por estado"),
-                        dcc.Graph(id="grafico-estado"),
+                        dcc.Graph(id="grafico-estado", style={"height": "420px"}),
                     ],
-                    style={"flex": "2", "minWidth": "350px"}
                 ),
                 html.Div(
                     children=[
                         html.H3("Participação por bandeira"),
-                        dcc.Graph(id="grafico-pizza-bandeira"),
+                        dcc.Graph(id="grafico-pizza-bandeira", style={"height": "380px"}),
                     ],
-                    style={"flex": "1", "minWidth": "300px"}
                 ),
             ],
         ),
 
-        #
+        #div para timeline por região
         html.Div(
-            style={"display": "flex", "gap": "20px", "flexWrap": "wrap", "marginTop": "20px"},
+            style={"marginTop": "20px"},
             children=[
                 html.Div(
                     children=[
                         html.H3("Evolução do preço médio por região"),
-                        dcc.Graph(id="grafico-linha-regiao"),
+                        dcc.Graph(id="grafico-linha-regiao", style={"height": "420px"}),
                     ],
-                    style={"flex": "1", "minWidth": "350px"}
                 ),
             ],
         ),
 
-        
+        #div para dados de bandeira
         html.Div(
-            style={"display": "flex", "gap": "20px", "flexWrap": "wrap", "marginTop": "20px"},
+            style={
+                "display": "grid",
+                "gridTemplateColumns": "repeat(auto-fit, minmax(320px, 1fr))",
+                "gap": GRID_GAP,
+                "marginTop": "20px",
+            },
             children=[
                 html.Div(
                     children=[
                         html.H3("Preço médio por bandeira"),
-                        dcc.Graph(id="grafico-bandeira"),
+                        dcc.Graph(id="grafico-bandeira", style={"height": "380px"}),
                     ],
-                    style={"flex": "1", "minWidth": "350px"}
                 ),
                 html.Div(
                     children=[
                         html.H3("Distribuição de preços (histograma)"),
-                        dcc.Graph(id="grafico-histograma"),
+                        dcc.Graph(id="grafico-histograma", style={"height": "380px"}),
                     ],
-                    style={"flex": "1", "minWidth": "350px"}
                 ),
                 html.Div(
                     children=[
                         html.H3("Boxplot por bandeira"),
-                        dcc.Graph(id="grafico-box-bandeira"),
+                        dcc.Graph(id="grafico-box-bandeira", style={"height": "380px"}),
                     ],
-                    style={"flex": "1", "minWidth": "350px"}
                 ),
             ],
         ),
     ],
 )
 
-
+#callback
 @app.callback(
     [
         Output("grafico-estado", "figure"),
@@ -188,26 +198,27 @@ app.layout = html.Div(
     ],
 )
 def atualizar_graficos(regioes_sel, bandeiras_sel, data_inicio, data_fim):
-    
     dados = df.copy()
 
+    # transformando data em formato string para datetime
     if data_inicio is not None and data_fim is not None:
-        dados = dados[(dados["data_coleta"] >= data_inicio) & (dados["data_coleta"] <= data_fim)]
+        di = pd.to_datetime(data_inicio)
+        df_ = pd.to_datetime(data_fim)
+        dados = dados[(dados["data_coleta"] >= di) & (dados["data_coleta"] <= df_)]
 
-    if regioes_sel and len(regioes_sel) > 0:
+    if regioes_sel:
         dados = dados[dados["regiao"].isin(regioes_sel)]
 
-    if bandeiras_sel and len(bandeiras_sel) > 0:
+    if bandeiras_sel:
         dados = dados[dados["bandeira"].isin(bandeiras_sel)]
 
-    
+    # análise de preço médio por estado
     estado_media = (
-        dados.groupby("uf")["valor_venda"]
+        dados.groupby("uf", dropna=True)["valor_venda"]
         .mean()
         .sort_values(ascending=False)
         .reset_index()
     )
-
     fig_estado = px.bar(
         estado_media,
         x="uf",
@@ -215,11 +226,15 @@ def atualizar_graficos(regioes_sel, bandeiras_sel, data_inicio, data_fim):
         labels={"uf": "Estado", "valor_venda": "Preço médio (R$)"},
         title="Preço médio de GLP por estado",
     )
-    fig_estado.update_layout(xaxis_tickangle=-45)
+    fig_estado.update_layout(
+        xaxis_tickangle=-45,
+        height=420,
+        margin=dict(t=60, r=20, b=40, l=60),
+    )
 
-    
+    # evolução temporal por região
     regiao_tempo = (
-        dados.groupby(["data_coleta", "regiao"])["valor_venda"]
+        dados.groupby(["data_coleta", "regiao"], dropna=True)["valor_venda"]
         .mean()
         .reset_index()
         .sort_values("data_coleta")
@@ -230,13 +245,21 @@ def atualizar_graficos(regioes_sel, bandeiras_sel, data_inicio, data_fim):
         y="valor_venda",
         color="regiao",
         markers=True,
-        labels={"data_coleta": "Data de coleta", "valor_venda": "Preço médio (R$)", "regiao": "Região"},
+        labels={
+            "data_coleta": "Data de coleta",
+            "valor_venda": "Preço médio (R$)",
+            "regiao": "Região",
+        },
         title="Evolução do preço médio por região",
     )
+    fig_linha.update_layout(
+        height=420,
+        margin=dict(t=60, r=20, b=40, l=60),
+    )
 
-    
+    #gráfico de barra preço médio por bandeira
     bandeira_media = (
-        dados.groupby("bandeira")["valor_venda"]
+        dados.groupby("bandeira", dropna=True)["valor_venda"]
         .mean()
         .sort_values(ascending=False)
         .reset_index()
@@ -248,9 +271,13 @@ def atualizar_graficos(regioes_sel, bandeiras_sel, data_inicio, data_fim):
         labels={"bandeira": "Bandeira", "valor_venda": "Preço médio (R$)"},
         title="Preço médio por bandeira",
     )
-    fig_bandeira.update_layout(xaxis_tickangle=-45)
+    fig_bandeira.update_layout(
+        xaxis_tickangle=-45,
+        height=380,
+        margin=dict(t=60, r=20, b=80, l=60),
+    )
 
-    
+    # histograma para contagem de valor
     fig_hist = px.histogram(
         dados,
         x="valor_venda",
@@ -258,8 +285,12 @@ def atualizar_graficos(regioes_sel, bandeiras_sel, data_inicio, data_fim):
         labels={"valor_venda": "Preço de venda (R$)"},
         title="Distribuição dos preços de venda",
     )
+    fig_hist.update_layout(
+        height=380,
+        margin=dict(t=60, r=20, b=40, l=60),
+    )
 
-    
+    # análise de boxplot do valor por bandeira
     fig_box = px.box(
         dados,
         x="bandeira",
@@ -268,9 +299,13 @@ def atualizar_graficos(regioes_sel, bandeiras_sel, data_inicio, data_fim):
         labels={"bandeira": "Bandeira", "valor_venda": "Preço de venda (R$)"},
         title="Variação do preço por bandeira",
     )
-    fig_box.update_layout(xaxis_tickangle=-45)
+    fig_box.update_layout(
+        xaxis_tickangle=-45,
+        height=380,
+        margin=dict(t=60, r=20, b=80, l=60),
+    )
 
-    
+    #gráfico de participação das bandeiras no mercado
     bandeira_count = dados["bandeira"].value_counts().reset_index()
     bandeira_count.columns = ["bandeira", "qtd"]
     fig_pizza = px.pie(
@@ -279,10 +314,14 @@ def atualizar_graficos(regioes_sel, bandeiras_sel, data_inicio, data_fim):
         values="qtd",
         title="Participação das bandeiras na amostra",
     )
+    fig_pizza.update_layout(
+        height=380,
+        margin=dict(t=60, r=20, b=40, l=60),
+    )
 
     return fig_estado, fig_linha, fig_bandeira, fig_hist, fig_box, fig_pizza
 
 
-#rodando o dash
+#iniciando server
 if __name__ == "__main__":
     app.run(debug=True)
