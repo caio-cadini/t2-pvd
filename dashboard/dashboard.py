@@ -59,7 +59,7 @@ GRID_GAP = "20px"
 app.layout = html.Div(
     style={"margin": "20px"},
     children=[
-        html.H1("Dashboard de Preços de GLP - 2024", style={"textAlign": "center"}),
+        html.H1("Dashboard de Preços de GLP - 2025", style={"textAlign": "center"}),
         html.P(
             "Explore preços médios de GLP por estado, região e bandeira com base nos dados coletados pela ANP.",
             style={"textAlign": "center"},
