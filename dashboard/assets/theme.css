@@ -1,0 +1,26 @@
+/* ===============================
+   Theme variables
+   =============================== */
+
+:root {
+  --background-color: #f9f9f9;
+  --text-color: #222;
+  --card-bg: #ffffff;
+  --border-color: #ddd;
+  --primary-color: #007bff;
+  --accent-color: #009688;
+
+  --font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+  --font-size-base: 16px;
+  --font-size-title: 24px;
+  --font-size-subtitle: 18px;
+}
+
+[data-theme="dark"] {
+  --background-color: #121212;
+  --text-color: #eaeaea;
+  --card-bg: #1e1e1e;
+  --border-color: #333;
+  --primary-color: #3d8bfd;
+  --accent-color: #26a69a;
+}

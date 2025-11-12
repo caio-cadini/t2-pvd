@@ -1,14 +1,17 @@
 import pandas as pd
 from datetime import datetime
-
+from pathlib import Path
 from dash import Dash, dcc, html, Input, Output
 import plotly.express as px
 
 
+BASE_DIR = Path(__file__).resolve().parent
+file_path = BASE_DIR/"datasets"/"GLP"/"glp-2025-01.csv"
+
 #Tratamento dos dados
 
 df = pd.read_csv(
-    "datasets/GLP/glp-2025-01.csv",
+    file_path,
     sep=None,
     engine="python",
     encoding="utf-8-sig",
